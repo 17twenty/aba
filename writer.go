@@ -211,10 +211,8 @@ func NewWriter(w io.Writer) *Writer {
 	}
 }
 
-// Write writes the contents of p into the buffer.
-// It returns the number of bytes written.
-// If nn < len(p), it also returns an error explaining
-// why the write is short.
+// Write writes the provided []Records into the buffer.
+// It returns an error if something is wrong with the records.
 func (w *Writer) Write(records []Record) (err error) {
 	if len(records) < 2 {
 		return ErrInsufficientRecords

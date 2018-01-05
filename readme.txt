@@ -1,7 +1,7 @@
 PACKAGE DOCUMENTATION
 
 package aba
-    import "github.com/17twenty/aba.git"
+    import "."
 
 
 CONSTANTS
@@ -70,6 +70,7 @@ func (w *Writer) Flush()
     Flush can be called to ensure all data has been written
 
 func (w *Writer) Write(records []Record) (err error)
-    Write writes the contents of p into the buffer. It returns the number of
-    bytes written. If nn < len(p), it also returns an error explaining why
-    the write is short.
+    Write writes the provided []Records into the buffer. It returns an error
+    if something is wrong with the records.
+
+
