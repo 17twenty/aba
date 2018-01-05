@@ -1,7 +1,7 @@
 PACKAGE DOCUMENTATION
 
 package aba
-    import "git.s8.network/nick/aba.git"
+    import "github.com/17twenty/aba.git"
 
 
 CONSTANTS
