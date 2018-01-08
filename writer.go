@@ -181,6 +181,9 @@ func (t *trailer) Write(w io.Writer) {
 // Flush method to guarantee all data has been forwarded to
 // the underlying io.Writer.
 type Writer struct {
+	// OmitBatchTotals can be used for banks that don't summarise
+	// the credit/debit transactions
+	OmitBatchTotals bool
 	header
 	trailer
 	wr *bufio.Writer
@@ -235,14 +238,16 @@ func (w *Writer) Write(records []Record) (err error) {
 	w.wr.WriteByte('\n')
 	for i, r := range records {
 		r.Write(w.wr)
-		switch r.TransactionCode {
-		case Debit:
-			w.trailer.userDebitTotalAmount += r.Amount
-		default:
-			if strings.HasPrefix(r.TransactionCode, "5") {
-				w.trailer.userCreditTotalAmount += r.Amount
-			} else {
-				log.Println("Unknown transaction type", r.TransactionCode, "in record", i)
+		if !w.OmitBatchTotals {
+			switch r.TransactionCode {
+			case Debit:
+				w.trailer.userDebitTotalAmount += r.Amount
+			default:
+				if strings.HasPrefix(r.TransactionCode, "5") {
+					w.trailer.userCreditTotalAmount += r.Amount
+				} else {
+					log.Println("Unknown transaction type", r.TransactionCode, "in record", i)
+				}
 			}
 		}
 
@@ -252,7 +257,7 @@ func (w *Writer) Write(records []Record) (err error) {
 	// Last part is to get net trailer amount
 	// TODO: Some banks require a balancing line at the bottom
 	// We're going to omit it unless told otherwise
-	w.trailer.userNetTotalAmount = 0
+	w.trailer.userNetTotalAmount = w.trailer.userCreditTotalAmount - w.trailer.userDebitTotalAmount
 	w.trailer.Write(w.wr)
 	return nil
 }

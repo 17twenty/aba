@@ -58,6 +58,9 @@ func (r *Record) IsValid() bool
 func (r *Record) Write(w io.Writer)
 
 type Writer struct {
+    // OmitBatchTotals can be used for banks that don't summarise
+    // the credit/debit transactions
+    OmitBatchTotals bool
     // contains filtered or unexported fields
 }
     Writer implements buffering for an io.Writer object. If an error occurs
