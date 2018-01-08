@@ -62,9 +62,7 @@ func TestDemo(t *testing.T) {
 }
 
 func TestMinimumLength(t *testing.T) {
-	records := []Record{
-		{},
-	}
+	records := []Record{}
 
 	w := NewWriter(os.Stdout)
 
@@ -73,5 +71,3 @@ func TestMinimumLength(t *testing.T) {
 	}
 
 }
-
-// 0        01MBL        Macquarie Bank LTD       999181Creditors    110811XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

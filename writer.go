@@ -223,14 +223,14 @@ func (w *Writer) Write(records []Record) (err error) {
 	if w.APCAUserID == 0 {
 		return ErrMustSpecifyAPCAUserID
 	}
+
 	// Validation spin...
+	w.trailer.userTotalRecords = len(records) // Count valid records
 	for i, r := range records {
 		if !r.IsValid() {
 			return fmt.Errorf("%v (record %d)", ErrInvalidRecord, i)
 		}
 	}
-
-	w.trailer.userTotalRecords = len(records)
 
 	w.trailer.userCreditTotalAmount = 0
 	w.trailer.userDebitTotalAmount = 0
