@@ -12,10 +12,6 @@ import (
 )
 
 const (
-	defaultBufSize = 4096
-)
-
-const (
 	Debit           = "13" // Externally initiated debit item
 	Credit          = "50" // Initiated externally
 	AGSI            = "51" // Australian Govt Security Interest
