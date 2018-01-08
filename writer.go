@@ -13,16 +13,26 @@ import (
 
 const (
 	defaultBufSize = 4096
-	Credit         = "50"
-	Debit          = "13"
+)
+
+const (
+	Debit           = "13" // Externally initiated debit item
+	Credit          = "50" // Initiated externally
+	AGSI            = "51" // Australian Govt Security Interest
+	FamilyAllowance = "52" // Family allowance
+	Pay             = "53" // Pay
+	Pension         = "54" // Pension
+	Allotment       = "55" // Allotment
+	Dividend        = "56" // Dividend
+	NoteInterest    = "57" // Debenture/Note Interest
 )
 
 var (
-	// ErrInsufficientRecords is returned when the minimum 2 records is not provided for writing
 	ErrInsufficientRecords   = errors.New("aba: Not enough records (minimum 2 required)")
 	ErrMustSpecifyUsersBank  = errors.New("aba: Didn't specify the users bank")
 	ErrMustSpecifyUsersID    = errors.New("aba: Didn't specify the users ID")
 	ErrMustSpecifyAPCAUserID = errors.New("aba: Didn't specify the APCA ID")
+	ErrInvalidRecord         = errors.New("aba: Invalid Record can't be written")
 
 	bsbNumberRegEx = regexp.MustCompile(`^\d{3}-\d{3}$`)
 )
@@ -38,15 +48,6 @@ func padRight(str, pad string, length int) string {
 
 func spaces(howMany int) string {
 	return padRight("", " ", howMany)
-}
-
-func padLeft(str, pad string, length int) string {
-	for {
-		str = pad + str
-		if len(str) > length {
-			return str[0:length]
-		}
-	}
 }
 
 type header struct {
@@ -79,24 +80,24 @@ func (h *header) Write(w io.Writer) {
 
 // Record is the type we care about for writing to file
 type Record struct {
-	recordType    int    // pos 1 - always zero
+	// RecordType pos 1 - always one
 	BSBNumber     string // pos 2-8 - in the format 999-999
 	AccountNumber string // pos 9-17
 	// Indicator should be one of the following
-	// W - Dvidend paid to a resident of a country where double tax agreement is in force
-	// X - Dividen paid to a resident of any other country
+	// W - Dividend paid to a resident of a country where double tax agreement is in force
+	// X - Dividend paid to a resident of any other country
 	// Y - Interest paid to all non-residents -- tax withholding is to appear at 113-120
 	// N - New or varied BSB/account number or name
 	// Blank otherwise
 	Indicator              string // pos 18
 	TransactionCode        string // pos 19-20 - Either 13, debit or 50, credit.
-	Amount                 string // pos 21-30 - in cents, Right justified in cents e,g, $100.00 == 10000
+	Amount                 uint64 // pos 21-30 - in cents, Right justified in cents e,g, $100.00 == 10000
 	Title                  string // pos 31-62 - must not be blank,. Left justified and blank filled. Title of account
 	LodgementReference     string // pos 63-80 - e.g invoice number/payroll etc
 	TraceBSB               string // pos 81-87 - BSB number of user supplying the file in format 999-999
 	TraceAccount           string // pos 88-96 - account number of user supplying file
 	NameOfRemitter         string // pos 97-112 - name of originator which may differe from username
-	AmountOfWithholdingTax string // pos 113-120 - Shown in cents without punctuation
+	AmountOfWithholdingTax uint64 // pos 113-120 - Shown in cents without punctuation
 }
 
 // IsValid performs some basic checks on records
@@ -118,11 +119,6 @@ func (r *Record) IsValid() bool {
 		return false
 	}
 
-	// Remitter check
-	if len(strings.TrimSpace(r.NameOfRemitter)) == 0 {
-		return false
-	}
-
 	// BSB validation
 	if !bsbNumberRegEx.MatchString(r.TraceBSB) {
 		return false
@@ -132,8 +128,7 @@ func (r *Record) IsValid() bool {
 
 func (r *Record) Write(w io.Writer) {
 	tempStr := fmt.Sprintf(
-		"%d%7.7s%9.9s%1.1s%2.2s%010.10s%32.32s%18.18s%7.7s%9.9s%16.16s%08.8s",
-		r.recordType,
+		"1%7.7s%9.9s%1.1s%2.2s%010.10d%32.32s%18.18s%7.7s%9.9s%16.16s%08.8d", // Record type always 1
 		r.BSBNumber,
 		r.AccountNumber,
 		r.Indicator,
@@ -154,17 +149,17 @@ func (r *Record) Write(w io.Writer) {
 type trailer struct {
 	recordType         int    // pos 1 - always seven!
 	DefaultBSB         string // pos 2-8 - always 999-999
-	userNetTotalAmount string // pos 21-30 - Right justfied in cents without punctuation i.e 0000000000
+	userNetTotalAmount uint64 // pos 21-30 - Right justfied in cents without punctuation i.e 0000000000
 	// in a balanced file, the credit and debit total should always be the same
-	userCreditTotalAmount        string // pos 31-40 - Right justified in cents e,g, $100.00 == 10000
-	userDebitTotalAmount         string // pos 41-50 - Right justified in cents e,g, $100.00 == 10000
-	userTotalCountOfType1Records int    // pos 75-80 - Right Justified of size 6
+	userCreditTotalAmount uint64 // pos 31-40 - Right justified in cents e,g, $100.00 == 10000
+	userDebitTotalAmount  uint64 // pos 41-50 - Right justified in cents e,g, $100.00 == 10000
+	userTotalRecords      int    // pos 75-80 - Right Justified of size 6
 	// Space filled from 81-120. Spaces between every gap for a total 120 characters
 }
 
 func (t *trailer) Write(w io.Writer) {
 	tempStr := fmt.Sprintf(
-		"%d%.7s%s%010s%010s%010s%s%06d%s",
+		"%d%.7s%s%010.10d%010.10d%010.10d%s%06d%s",
 		t.recordType,
 		t.DefaultBSB,
 		spaces(12),
@@ -172,7 +167,7 @@ func (t *trailer) Write(w io.Writer) {
 		t.userCreditTotalAmount,
 		t.userDebitTotalAmount,
 		spaces(24),
-		t.userTotalCountOfType1Records,
+		t.userTotalRecords,
 		spaces(40),
 	)
 	// Add final padding
@@ -198,8 +193,6 @@ func NewWriter(w io.Writer) *Writer {
 		header: header{
 			recordType:         0,
 			fileSequenceNumber: 1,
-			NameOfUsersBank:    "MBL",
-			NameOfUserID:       "Macquarie Bank LTD",
 			APCAUserID:         181,
 			Description:        "Creditors",
 			ProcessingDate:     time.Now(),
@@ -224,22 +217,42 @@ func (w *Writer) Write(records []Record) (err error) {
 	if len(strings.TrimSpace(w.NameOfUserID)) == 0 {
 		return ErrMustSpecifyUsersID
 	}
-
 	if w.APCAUserID == 0 {
 		return ErrMustSpecifyAPCAUserID
 	}
-	w.trailer.userTotalCountOfType1Records = len(records)
-	w.header.Write(w.wr)
-	w.wr.WriteByte('\n')
-	for _, field := range records {
-		if field.IsValid() {
-			field.Write(w.wr)
-			w.wr.WriteByte('\n')
-		} else {
-			// Decrement the count if it's a bad record
-			w.trailer.userTotalCountOfType1Records--
+	// Validation spin...
+	for i, r := range records {
+		if !r.IsValid() {
+			return fmt.Errorf("%v (record %d)", ErrInvalidRecord, i)
 		}
 	}
+
+	w.trailer.userTotalRecords = len(records)
+
+	w.trailer.userCreditTotalAmount = 0
+	w.trailer.userDebitTotalAmount = 0
+	w.header.Write(w.wr)
+	w.wr.WriteByte('\n')
+	for i, r := range records {
+		r.Write(w.wr)
+		switch r.TransactionCode {
+		case Debit:
+			w.trailer.userDebitTotalAmount += r.Amount
+		default:
+			if strings.HasPrefix(r.TransactionCode, "5") {
+				w.trailer.userCreditTotalAmount += r.Amount
+			} else {
+				log.Println("Unknown transaction type", r.TransactionCode, "in record", i)
+			}
+		}
+
+		w.wr.WriteByte('\n')
+	}
+
+	// Last part is to get net trailer amount
+	// TODO: Some banks require a balancing line at the bottom
+	// We're going to omit it unless told otherwise
+	w.trailer.userNetTotalAmount = 0
 	w.trailer.Write(w.wr)
 	return nil
 }

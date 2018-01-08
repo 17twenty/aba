@@ -7,41 +7,48 @@ package aba
 CONSTANTS
 
 const (
-    Credit = "50"
-    Debit  = "13"
+    Debit           = "13" // Externally initiated debit item
+    Credit          = "50" // Initiated externally
+    AGSI            = "51" // Australian Govt Security Interest
+    FamilyAllowance = "52" // Family allowance
+    Pay             = "53" // Pay
+    Pension         = "54" // Pension
+    Allotment       = "55" // Allotment
+    Dividend        = "56" // Dividend
+    NoteInterest    = "57" // Debenture/Note Interest
 )
 
 VARIABLES
 
 var (
-    // ErrInsufficientRecords is returned when the minimum 2 records is not provided for writing
     ErrInsufficientRecords   = errors.New("aba: Not enough records (minimum 2 required)")
     ErrMustSpecifyUsersBank  = errors.New("aba: Didn't specify the users bank")
     ErrMustSpecifyUsersID    = errors.New("aba: Didn't specify the users ID")
     ErrMustSpecifyAPCAUserID = errors.New("aba: Didn't specify the APCA ID")
+    ErrInvalidRecord         = errors.New("aba: Invalid Record can't be written")
 )
 
 TYPES
 
 type Record struct {
+    // RecordType pos 1 - always one
     BSBNumber     string // pos 2-8 - in the format 999-999
     AccountNumber string // pos 9-17
     // Indicator should be one of the following
-    // W - Dvidend paid to a resident of a country where double tax agreement is in force
-    // X - Dividen paid to a resident of any other country
+    // W - Dividend paid to a resident of a country where double tax agreement is in force
+    // X - Dividend paid to a resident of any other country
     // Y - Interest paid to all non-residents -- tax withholding is to appear at 113-120
     // N - New or varied BSB/account number or name
     // Blank otherwise
     Indicator              string // pos 18
     TransactionCode        string // pos 19-20 - Either 13, debit or 50, credit.
-    Amount                 string // pos 21-30 - in cents, Right justified in cents e,g, $100.00 == 10000
+    Amount                 uint64 // pos 21-30 - in cents, Right justified in cents e,g, $100.00 == 10000
     Title                  string // pos 31-62 - must not be blank,. Left justified and blank filled. Title of account
     LodgementReference     string // pos 63-80 - e.g invoice number/payroll etc
     TraceBSB               string // pos 81-87 - BSB number of user supplying the file in format 999-999
     TraceAccount           string // pos 88-96 - account number of user supplying file
     NameOfRemitter         string // pos 97-112 - name of originator which may differe from username
-    AmountOfWithholdingTax string // pos 113-120 - Shown in cents without punctuation
-    // contains filtered or unexported fields
+    AmountOfWithholdingTax uint64 // pos 113-120 - Shown in cents without punctuation
 }
     Record is the type we care about for writing to file
 

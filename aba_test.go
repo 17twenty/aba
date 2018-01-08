@@ -15,6 +15,7 @@ func TestDemo(t *testing.T) {
 			Title:           "DEMO DEMO",
 			TraceBSB:        "111-111",
 			TraceAccount:    "999999999",
+			Amount:          1000,
 			NameOfRemitter:  "SpaceshipAU",
 		},
 		{
@@ -22,12 +23,23 @@ func TestDemo(t *testing.T) {
 			BSBNumber:          "999-888",
 			TransactionCode:    Credit,
 			Title:              "MR NICK GLYNN",
+			Amount:             1000,
 			TraceBSB:           "999-999",
 			TraceAccount:       "999999999",
 			NameOfRemitter:     "SpaceshipAU",
 			LodgementReference: "SuperstarHeroBUTTHISBITMAKESITTOOLONGOMGWTFBBQ",
 		},
-		{},
+		{
+			AccountNumber:      "260070750",
+			BSBNumber:          "182-222",
+			TransactionCode:    Debit,
+			Title:              "Macquarite Account",
+			Amount:             2000,
+			TraceBSB:           "999-999",
+			TraceAccount:       "999999999",
+			NameOfRemitter:     "ddu",
+			LodgementReference: "ABLE",
+		},
 	}
 
 	w := NewWriter(os.Stdout)
@@ -38,7 +50,7 @@ func TestDemo(t *testing.T) {
 	w.NameOfUsersBank = "MBL"
 
 	if err := w.Write(records); err != nil {
-		t.Fatal("error writing record to aba:", err)
+		t.Fatal("error writing record", err)
 	}
 
 	// Write any buffered data to the underlying writer (standard output).
