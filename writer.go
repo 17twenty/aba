@@ -167,7 +167,7 @@ func (t *trailer) Write(w io.Writer) {
 		spaces(40),
 	)
 	// Add final padding
-	fmt.Fprintf(w, "%s", padRight(tempStr, "#", 120))
+	fmt.Fprintf(w, "%s", padRight(tempStr, " ", 120))
 }
 
 // Writer implements buffering for an io.Writer object.
@@ -246,7 +246,6 @@ func (w *Writer) Write(records []Record) (err error) {
 				}
 			}
 		}
-
 		w.wr.WriteByte('\n')
 	}
 
