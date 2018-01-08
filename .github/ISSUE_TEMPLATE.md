@@ -6,8 +6,8 @@
 1. That
 1. What?
 
-## Expected Behavior
+## Expected Behaviour
 
-## Actual behavior
+## Actual behaviour
 
 ## Environment data and platform
