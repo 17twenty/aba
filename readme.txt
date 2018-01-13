@@ -26,9 +26,34 @@ var (
     ErrMustSpecifyUsersID    = errors.New("aba: Didn't specify the users ID")
     ErrMustSpecifyAPCAUserID = errors.New("aba: Didn't specify the APCA ID")
     ErrInvalidRecord         = errors.New("aba: Invalid Record can't be written")
+    ErrBadHeader             = errors.New("aba: Bad Header prevented reading")
+    ErrBadRecord             = errors.New("aba: Bad Record prevented reading")
+    ErrBadTrailer            = errors.New("aba: Bad Trailer prevented reading")
+    ErrUnexpectedRecordType  = errors.New("aba: Unexpected record type, can decode 0,1 and 7 only")
 )
 
 TYPES
+
+type Reader struct {
+    Header  header
+    Trailer trailer
+    // contains filtered or unexported fields
+}
+    A Reader reads records from an ABA file.
+
+    As returned by NewReader, a Reader expects input conforming to spec. The
+    Header and Trailer fields expose details about the underlying item
+
+func NewReader(r io.Reader) *Reader
+    NewReader returns a new Reader that reads from r.
+
+func (r *Reader) Read() (record Record, err error)
+    Read reads one record (a slice of fields) from r First read may not
+    return a record, instead Header will likely be populated. You may also
+    get Trailer as the last
+
+func (r *Reader) ReadAll() (records []Record, err error)
+    ReadAll reads all the remaining records from r.
 
 type Record struct {
     // RecordType pos 1 - always one
@@ -54,6 +79,8 @@ type Record struct {
 
 func (r *Record) IsValid() bool
     IsValid performs some basic checks on records
+
+func (r *Record) Read(l string) error
 
 func (r *Record) Write(w io.Writer)
 
