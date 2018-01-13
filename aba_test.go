@@ -101,7 +101,64 @@ func TestLocalReader(t *testing.T) {
 			t.Fatal("Expected '", val, "' but got", r[idx].Title)
 		}
 	}
+}
 
+func TestLocalWriter(t *testing.T) {
+	f, err := os.Create("./DELETE_ME")
+
+	if err != nil {
+		t.Fatal("Couldn't open local test file")
+	}
+
+	records := []Record{
+		{
+			AccountNumber:   "3424",
+			BSBNumber:       "888-123",
+			TransactionCode: Credit,
+			Title:           "DEMO DEMO",
+			TraceBSB:        "111-111",
+			TraceAccount:    "999999999",
+			Amount:          1000,
+			NameOfRemitter:  "SpaceshipAU",
+		},
+		{
+			AccountNumber:      "12112",
+			BSBNumber:          "999-888",
+			TransactionCode:    Credit,
+			Title:              "MR NICK GLYNN",
+			Amount:             1000,
+			TraceBSB:           "999-999",
+			TraceAccount:       "999999999",
+			NameOfRemitter:     "SpaceshipAU",
+			LodgementReference: "SuperstarHeroBUTTHISBITMAKESITTOOLONGOMGWTFBBQ",
+		},
+		{
+			AccountNumber:      "260070750",
+			BSBNumber:          "182-222",
+			TransactionCode:    Debit,
+			Title:              "Macquarite Account",
+			Amount:             2000,
+			TraceBSB:           "999-999",
+			TraceAccount:       "999999999",
+			NameOfRemitter:     "ddu",
+			LodgementReference: "ABLE",
+		},
+	}
+
+	w := NewWriter(f)
+
+	// To handle Windows encoding... urgh
+	w.CRLFLineEndings = true
+
+	w.Description = "WeeklyDebit"
+	w.NameOfUserID = "Macquarie Bank LTD"
+	w.APCAUserID = 181
+	w.NameOfUsersBank = "MBL"
+
+	if err := w.Write(records); err != nil {
+		t.Fatal("error writing record", err)
+	}
+	w.Flush()
 }
 
 func TestWriteReader(t *testing.T) {

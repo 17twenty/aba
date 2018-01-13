@@ -19,6 +19,9 @@ type Writer struct {
 	// OmitBatchTotals can be used for banks that don't summarise
 	// the credit/debit transactions
 	OmitBatchTotals bool
+	// CRLFLineEndings allows you to toggle whether to use Windows/DOS style
+	// line endings vs the default unix style
+	CRLFLineEndings bool
 	header
 	trailer
 	wr *bufio.Writer
@@ -70,6 +73,9 @@ func (w *Writer) Write(records []Record) (err error) {
 	w.trailer.UserCreditTotalAmount = 0
 	w.trailer.UserDebitTotalAmount = 0
 	w.header.Write(w.wr)
+	if w.CRLFLineEndings {
+		w.wr.WriteByte('\r')
+	}
 	w.wr.WriteByte('\n')
 	for i, r := range records {
 		r.Write(w.wr)
@@ -84,6 +90,9 @@ func (w *Writer) Write(records []Record) (err error) {
 					log.Println("Unknown transaction type", r.TransactionCode, "in record", i)
 				}
 			}
+		}
+		if w.CRLFLineEndings {
+			w.wr.WriteByte('\r')
 		}
 		w.wr.WriteByte('\n')
 	}
