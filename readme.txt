@@ -56,7 +56,6 @@ func (r *Reader) ReadAll() (records []Record, err error)
     ReadAll reads all the remaining records from r.
 
 type Record struct {
-    // RecordType pos 1 - always one
     BSBNumber     string // pos 2-8 - in the format 999-999
     AccountNumber string // pos 9-17
     // Indicator should be one of the following
@@ -72,7 +71,7 @@ type Record struct {
     LodgementReference     string // pos 63-80 - e.g invoice number/payroll etc
     TraceBSB               string // pos 81-87 - BSB number of user supplying the file in format 999-999
     TraceAccount           string // pos 88-96 - account number of user supplying file
-    NameOfRemitter         string // pos 97-112 - name of originator which may differe from username
+    NameOfRemitter         string // pos 97-112 - name of originator which may differ from username
     AmountOfWithholdingTax uint64 // pos 113-120 - Shown in cents without punctuation
 }
     Record is the type we care about for writing to file

@@ -97,7 +97,6 @@ func (h *header) Read(l string) error {
 
 // Record is the type we care about for writing to file
 type Record struct {
-	// RecordType pos 1 - always one
 	BSBNumber     string // pos 2-8 - in the format 999-999
 	AccountNumber string // pos 9-17
 	// Indicator should be one of the following
@@ -113,7 +112,7 @@ type Record struct {
 	LodgementReference     string // pos 63-80 - e.g invoice number/payroll etc
 	TraceBSB               string // pos 81-87 - BSB number of user supplying the file in format 999-999
 	TraceAccount           string // pos 88-96 - account number of user supplying file
-	NameOfRemitter         string // pos 97-112 - name of originator which may differe from username
+	NameOfRemitter         string // pos 97-112 - name of originator which may differ from username
 	AmountOfWithholdingTax uint64 // pos 113-120 - Shown in cents without punctuation
 }
 
@@ -130,8 +129,7 @@ func (r *Record) IsValid() bool {
 		return false
 	}
 
-	// Title validation
-	// 1. Can't be all blank
+	// Title validation - can't be all blank
 	if len(strings.TrimSpace(r.Title)) == 0 {
 		return false
 	}
@@ -167,7 +165,6 @@ func (r *Record) Read(l string) error {
 		return ErrBadRecord
 	}
 	// Just read it all back in and unpack
-	// r., _ = strconv.Atoi(l[0:1])
 	r.BSBNumber = strings.TrimSpace(l[1:8])
 	r.AccountNumber = strings.TrimSpace(l[8:17])
 	r.Indicator = strings.TrimSpace(l[17:18])
@@ -189,7 +186,7 @@ func (r *Record) Read(l string) error {
 }
 
 type trailer struct {
-	recordType         int    // pos 1 - always seven!
+	recordType         int    // pos 1 - always seven
 	DefaultBSB         string // pos 2-8 - always 999-999
 	UserNetTotalAmount uint64 // pos 21-30 - Right justfied in cents without punctuation i.e 0000000000
 	// in a balanced file, the credit and debit total should always be the same
