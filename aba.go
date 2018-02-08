@@ -188,11 +188,11 @@ func (r *Record) Read(l string) error {
 type trailer struct {
 	recordType         int    // pos 1 - always seven
 	DefaultBSB         string // pos 2-8 - always 999-999
-	UserNetTotalAmount uint64 // pos 21-30 - Right justfied in cents without punctuation i.e 0000000000
+	userNetTotalAmount uint64 // pos 21-30 - Right justfied in cents without punctuation i.e 0000000000
 	// in a balanced file, the credit and debit total should always be the same
-	UserCreditTotalAmount uint64 // pos 31-40 - Right justified in cents e,g, $100.00 == 10000
-	UserDebitTotalAmount  uint64 // pos 41-50 - Right justified in cents e,g, $100.00 == 10000
-	UserTotalRecords      int    // pos 75-80 - Right Justified of size 6
+	userCreditTotalAmount uint64 // pos 31-40 - Right justified in cents e,g, $100.00 == 10000
+	userDebitTotalAmount  uint64 // pos 41-50 - Right justified in cents e,g, $100.00 == 10000
+	userTotalRecords      int    // pos 75-80 - Right Justified of size 6
 	// Space filled from 81-120. Spaces between every gap for a total 120 characters
 }
 
@@ -202,11 +202,11 @@ func (t *trailer) Write(w io.Writer) {
 		t.recordType,
 		t.DefaultBSB,
 		spaces(12),
-		t.UserNetTotalAmount,
-		t.UserCreditTotalAmount,
-		t.UserDebitTotalAmount,
+		t.userNetTotalAmount,
+		t.userCreditTotalAmount,
+		t.userDebitTotalAmount,
 		spaces(24),
-		t.UserTotalRecords,
+		t.userTotalRecords,
 		spaces(40),
 	)
 	// Add final padding
@@ -224,14 +224,14 @@ func (t *trailer) Read(l string) error {
 	t.DefaultBSB = strings.TrimSpace(l[1:8])
 
 	tmp, _ := strconv.Atoi(strings.TrimSpace(l[20:30]))
-	t.UserNetTotalAmount = uint64(tmp)
+	t.userNetTotalAmount = uint64(tmp)
 
 	tmp, _ = strconv.Atoi(strings.TrimSpace(l[30:40]))
-	t.UserCreditTotalAmount = uint64(tmp)
+	t.userCreditTotalAmount = uint64(tmp)
 
 	tmp, _ = strconv.Atoi(strings.TrimSpace(l[40:50]))
-	t.UserDebitTotalAmount = uint64(tmp)
-	t.UserTotalRecords, _ = strconv.Atoi(strings.TrimSpace(l[74:80]))
+	t.userDebitTotalAmount = uint64(tmp)
+	t.userTotalRecords, _ = strconv.Atoi(strings.TrimSpace(l[74:80]))
 
 	return nil
 }

@@ -63,15 +63,15 @@ func (w *Writer) Write(records []Record) (err error) {
 	}
 
 	// Validation spin...
-	w.trailer.UserTotalRecords = len(records) // Count valid records
+	w.trailer.userTotalRecords = len(records) // Count valid records
 	for i, r := range records {
 		if !r.IsValid() {
 			return fmt.Errorf("%v (record %d)", ErrInvalidRecord, i)
 		}
 	}
 
-	w.trailer.UserCreditTotalAmount = 0
-	w.trailer.UserDebitTotalAmount = 0
+	w.trailer.userCreditTotalAmount = 0
+	w.trailer.userDebitTotalAmount = 0
 	w.header.Write(w.wr)
 	if w.CRLFLineEndings {
 		w.wr.WriteByte('\r')
@@ -82,10 +82,10 @@ func (w *Writer) Write(records []Record) (err error) {
 		if !w.OmitBatchTotals {
 			switch r.TransactionCode {
 			case Debit:
-				w.trailer.UserDebitTotalAmount += r.Amount
+				w.trailer.userDebitTotalAmount += r.Amount
 			default:
 				if strings.HasPrefix(r.TransactionCode, "5") {
-					w.trailer.UserCreditTotalAmount += r.Amount
+					w.trailer.userCreditTotalAmount += r.Amount
 				} else {
 					log.Println("Unknown transaction type", r.TransactionCode, "in record", i)
 				}
@@ -100,7 +100,9 @@ func (w *Writer) Write(records []Record) (err error) {
 	// Last part is to get net trailer amount
 	// Some banks require a balancing line at the bottom
 	// We're going to omit it unless told otherwise
-	w.trailer.UserNetTotalAmount = w.trailer.UserCreditTotalAmount - w.trailer.UserDebitTotalAmount
+	if w.trailer.userDebitTotalAmount < w.trailer.userCreditTotalAmount {
+		w.trailer.userNetTotalAmount = w.trailer.userCreditTotalAmount - w.trailer.userDebitTotalAmount
+	}
 	w.trailer.Write(w.wr)
 	return nil
 }
