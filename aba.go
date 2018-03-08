@@ -50,9 +50,9 @@ func spaces(howMany int) string {
 	return padRight("", " ", howMany)
 }
 
-type header struct {
-	recordType         int       // pos 1 - always zero
-	fileSequenceNumber int       // pos 19-20 - right justified, can increment or set to 01
+type Header struct {
+	RecordType         int       // pos 1 - always zero
+	FileSequenceNumber int       // pos 19-20 - right justified, can increment or set to 01
 	NameOfUsersBank    string    // pos 21-23 - always MBL
 	NameOfUserID       string    // pos 31-56 - left justified/blank filled
 	APCAUserID         int       // pos 57-62 - right justified/zero filled
@@ -61,12 +61,12 @@ type header struct {
 	// Space filled from 81-120. Spaces between every gap for a total 120 characters
 }
 
-func (h *header) Write(w io.Writer) {
+func (h *Header) Write(w io.Writer) {
 	tempStr := fmt.Sprintf(
 		"%d%s%2.2s%3.3s%s%26.26s%06.6d%12.12s%v",
-		h.recordType,
+		h.RecordType,
 		spaces(17),
-		fmt.Sprintf("%02d", h.fileSequenceNumber),
+		fmt.Sprintf("%02d", h.FileSequenceNumber),
 		h.NameOfUsersBank,
 		spaces(7), // 7 BlankSpaces
 		padRight(h.NameOfUserID, " ", 26),
@@ -78,14 +78,14 @@ func (h *header) Write(w io.Writer) {
 	fmt.Fprintf(w, "%s", padRight(tempStr, " ", 120))
 }
 
-func (h *header) Read(l string) error {
+func (h *Header) Read(l string) error {
 	if len(l) != 121 && len(l) != 122 { // 120 + '\n' || 120 + '\r\n'
 		log.Println("ABA: Header expected 120, got", len(l))
 		return ErrBadHeader
 	}
 	// Just read it all back in and unpack
-	h.recordType, _ = strconv.Atoi(strings.TrimSpace(l[0:1]))
-	h.fileSequenceNumber, _ = strconv.Atoi(strings.TrimSpace(l[18:20]))
+	h.RecordType, _ = strconv.Atoi(strings.TrimSpace(l[0:1]))
+	h.FileSequenceNumber, _ = strconv.Atoi(strings.TrimSpace(l[18:20]))
 	h.NameOfUsersBank = strings.TrimSpace(l[20:23])
 	h.NameOfUserID = strings.TrimSpace(l[30:56])
 	h.APCAUserID, _ = strconv.Atoi(strings.TrimSpace(l[56:62]))
@@ -185,53 +185,53 @@ func (r *Record) Read(l string) error {
 	return nil
 }
 
-type trailer struct {
-	recordType         int    // pos 1 - always seven
+type Trailer struct {
+	RecordType         int    // pos 1 - always seven
 	DefaultBSB         string // pos 2-8 - always 999-999
-	userNetTotalAmount uint64 // pos 21-30 - Right justfied in cents without punctuation i.e 0000000000
+	UserNetTotalAmount uint64 // pos 21-30 - Right justfied in cents without punctuation i.e 0000000000
 	// in a balanced file, the credit and debit total should always be the same
-	userCreditTotalAmount uint64 // pos 31-40 - Right justified in cents e,g, $100.00 == 10000
-	userDebitTotalAmount  uint64 // pos 41-50 - Right justified in cents e,g, $100.00 == 10000
-	userTotalRecords      int    // pos 75-80 - Right Justified of size 6
+	UserCreditTotalAmount uint64 // pos 31-40 - Right justified in cents e,g, $100.00 == 10000
+	UserDebitTotalAmount  uint64 // pos 41-50 - Right justified in cents e,g, $100.00 == 10000
+	UserTotalRecords      int    // pos 75-80 - Right Justified of size 6
 	// Space filled from 81-120. Spaces between every gap for a total 120 characters
 }
 
-func (t *trailer) Write(w io.Writer) {
+func (t *Trailer) Write(w io.Writer) {
 	tempStr := fmt.Sprintf(
 		"%d%.7s%s%010.10d%010.10d%010.10d%s%06d%s",
-		t.recordType,
+		t.RecordType,
 		t.DefaultBSB,
 		spaces(12),
-		t.userNetTotalAmount,
-		t.userCreditTotalAmount,
-		t.userDebitTotalAmount,
+		t.UserNetTotalAmount,
+		t.UserCreditTotalAmount,
+		t.UserDebitTotalAmount,
 		spaces(24),
-		t.userTotalRecords,
+		t.UserTotalRecords,
 		spaces(40),
 	)
 	// Add final padding
 	fmt.Fprintf(w, "%s", padRight(tempStr, " ", 120))
 }
 
-func (t *trailer) Read(l string) error {
+func (t *Trailer) Read(l string) error {
 	if len(l) != 120 { // 120 and no newline
 		log.Println("ABA: Trailer expected 120, got", len(l))
 		return ErrBadTrailer
 	}
 	// Just read it all back in and unpack
-	t.recordType, _ = strconv.Atoi(strings.TrimSpace(l[0:1]))
+	t.RecordType, _ = strconv.Atoi(strings.TrimSpace(l[0:1]))
 
 	t.DefaultBSB = strings.TrimSpace(l[1:8])
 
 	tmp, _ := strconv.Atoi(strings.TrimSpace(l[20:30]))
-	t.userNetTotalAmount = uint64(tmp)
+	t.UserNetTotalAmount = uint64(tmp)
 
 	tmp, _ = strconv.Atoi(strings.TrimSpace(l[30:40]))
-	t.userCreditTotalAmount = uint64(tmp)
+	t.UserCreditTotalAmount = uint64(tmp)
 
 	tmp, _ = strconv.Atoi(strings.TrimSpace(l[40:50]))
-	t.userDebitTotalAmount = uint64(tmp)
-	t.userTotalRecords, _ = strconv.Atoi(strings.TrimSpace(l[74:80]))
+	t.UserDebitTotalAmount = uint64(tmp)
+	t.UserTotalRecords, _ = strconv.Atoi(strings.TrimSpace(l[74:80]))
 
 	return nil
 }

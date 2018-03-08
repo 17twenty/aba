@@ -22,8 +22,8 @@ type Writer struct {
 	// CRLFLineEndings allows you to toggle whether to use Windows/DOS style
 	// line endings vs the default unix style
 	CRLFLineEndings bool
-	header
-	trailer
+	*Header
+	*Trailer
 	wr *bufio.Writer
 }
 
@@ -31,15 +31,15 @@ type Writer struct {
 func NewWriter(w io.Writer) *Writer {
 	return &Writer{
 		wr: bufio.NewWriter(w),
-		header: header{
-			recordType:         0,
-			fileSequenceNumber: 1,
+		Header: &Header{
+			RecordType:         0,
+			FileSequenceNumber: 1,
 			APCAUserID:         181,
 			Description:        "Creditors",
 			ProcessingDate:     time.Now(),
 		},
-		trailer: trailer{
-			recordType: 7,
+		Trailer: &Trailer{
+			RecordType: 7,
 			DefaultBSB: "999-999",
 		},
 	}
@@ -63,16 +63,16 @@ func (w *Writer) Write(records []Record) (err error) {
 	}
 
 	// Validation spin...
-	w.trailer.userTotalRecords = len(records) // Count valid records
+	w.Trailer.UserTotalRecords = len(records) // Count valid records
 	for i, r := range records {
 		if !r.IsValid() {
 			return fmt.Errorf("%v (record %d)", ErrInvalidRecord, i)
 		}
 	}
 
-	w.trailer.userCreditTotalAmount = 0
-	w.trailer.userDebitTotalAmount = 0
-	w.header.Write(w.wr)
+	w.Trailer.UserCreditTotalAmount = 0
+	w.Trailer.UserDebitTotalAmount = 0
+	w.Header.Write(w.wr)
 	if w.CRLFLineEndings {
 		w.wr.WriteByte('\r')
 	}
@@ -82,10 +82,10 @@ func (w *Writer) Write(records []Record) (err error) {
 		if !w.OmitBatchTotals {
 			switch r.TransactionCode {
 			case Debit:
-				w.trailer.userDebitTotalAmount += r.Amount
+				w.Trailer.UserDebitTotalAmount += r.Amount
 			default:
 				if strings.HasPrefix(r.TransactionCode, "5") {
-					w.trailer.userCreditTotalAmount += r.Amount
+					w.Trailer.UserCreditTotalAmount += r.Amount
 				} else {
 					log.Println("Unknown transaction type", r.TransactionCode, "in record", i)
 				}
@@ -100,10 +100,10 @@ func (w *Writer) Write(records []Record) (err error) {
 	// Last part is to get net trailer amount
 	// Some banks require a balancing line at the bottom
 	// We're going to omit it unless told otherwise
-	if w.trailer.userDebitTotalAmount < w.trailer.userCreditTotalAmount {
-		w.trailer.userNetTotalAmount = w.trailer.userCreditTotalAmount - w.trailer.userDebitTotalAmount
+	if w.Trailer.UserDebitTotalAmount < w.Trailer.UserCreditTotalAmount {
+		w.Trailer.UserNetTotalAmount = w.Trailer.UserCreditTotalAmount - w.Trailer.UserDebitTotalAmount
 	}
-	w.trailer.Write(w.wr)
+	w.Trailer.Write(w.wr)
 	return nil
 }
 

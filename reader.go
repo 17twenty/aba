@@ -11,15 +11,17 @@ import (
 // As returned by NewReader, a Reader expects input conforming to spec.
 // The Header and Trailer fields expose details about the underlying item
 type Reader struct {
-	Header  header
-	Trailer trailer
+	Header  *Header
+	Trailer *Trailer
 	r       *bufio.Reader
 }
 
 // NewReader returns a new Reader that reads from r.
 func NewReader(r io.Reader) *Reader {
 	return &Reader{
-		r: bufio.NewReader(r),
+		r:       bufio.NewReader(r),
+		Header:  &Header{},
+		Trailer: &Trailer{},
 	}
 }
 
@@ -71,6 +73,7 @@ func (r *Reader) readRecordOrHeaderOrTrailer() (Record, error) {
 	switch b {
 	case '0':
 		err = r.Header.Read(line)
+
 	case '1':
 		err = record.Read(line)
 	case '7':

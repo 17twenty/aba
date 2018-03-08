@@ -87,8 +87,8 @@ func TestLocalReader(t *testing.T) {
 		t.Fatal("Expected '", nil, "' but got", err)
 	}
 
-	if len(r) != 4 && nr.Trailer.userTotalRecords != 4 {
-		t.Fatalf("Failure - expected 3 records but got %v and %v\n", len(r), nr.Trailer.userTotalRecords)
+	if len(r) != 4 && nr.Trailer.UserTotalRecords != 4 {
+		t.Fatalf("Failure - expected 3 records but got %v and %v\n", len(r), nr.Trailer.UserTotalRecords)
 	}
 
 	for idx, val := range []string{
@@ -221,7 +221,7 @@ func TestWriteReader(t *testing.T) {
 		t.Fatal("Expected '", nil, "' but got", err)
 	}
 
-	if len(r) != 3 && f.Trailer.userTotalRecords != 3 {
-		t.Fatalf("Failure - expected 3 records but got %v and %v\n", len(r), f.Trailer.userTotalRecords)
+	if len(r) != 3 && f.Trailer.UserTotalRecords != 3 {
+		t.Fatalf("Failure - expected 3 records but got %v and %v\n", len(r), f.Trailer.UserTotalRecords)
 	}
 }
