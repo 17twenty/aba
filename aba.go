@@ -50,6 +50,20 @@ func spaces(howMany int) string {
 	return padRight("", " ", howMany)
 }
 
+// asciiSafe replaces any non-printable ASCII chars with a '.'
+func asciiSafe(s string) string {
+	var safe []byte
+	for i := 0; i < len(s); i++ {
+		// ' ' and '~' are the endpoints of the printable ASCII range.
+		if s[i] < ' ' || s[i] > '~' {
+			safe = append(safe, '?')
+		} else {
+			safe = append(safe, s[i])
+		}
+	}
+	return string(safe)
+}
+
 type Header struct {
 	RecordType         int       // pos 1 - always zero
 	FileSequenceNumber int       // pos 19-20 - right justified, can increment or set to 01
@@ -69,9 +83,9 @@ func (h *Header) Write(w io.Writer) {
 		fmt.Sprintf("%02d", h.FileSequenceNumber),
 		h.NameOfUsersBank,
 		spaces(7), // 7 BlankSpaces
-		padRight(h.NameOfUserID, " ", 26),
+		padRight(asciiSafe(h.NameOfUserID), " ", 26),
 		h.APCAUserID,
-		padRight(h.Description, " ", 12),
+		padRight(asciiSafe(h.Description), " ", 12),
 		h.ProcessingDate.Format("020106"),
 	)
 	// Add final padding
