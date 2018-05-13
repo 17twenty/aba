@@ -227,10 +227,10 @@ func TestWriteReader(t *testing.T) {
 }
 
 func TestASCIISafe(t *testing.T) {
-	if got := asciiSafe("O’Conner"); got != "O???Conner" {
-		t.Fatalf(got)
+	if got := asciiSafe("O’Conner"); got != "O Conner" {
+		t.Fatalf("%q", got)
 	}
 	if got := asciiSafe("this is a normal ASCII string"); got != "this is a normal ASCII string" {
-		t.Fatal(got)
+		t.Fatalf("%q", got)
 	}
 }

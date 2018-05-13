@@ -52,16 +52,16 @@ func spaces(howMany int) string {
 
 // asciiSafe replaces any non-printable ASCII chars with a '.'
 func asciiSafe(s string) string {
-	var safe []byte
-	for i := 0; i < len(s); i++ {
+	var safe string
+	for _, r := range s {
 		// ' ' and '~' are the endpoints of the printable ASCII range.
-		if s[i] < ' ' || s[i] > '~' {
-			safe = append(safe, '?')
+		if r < ' ' || r > '~' {
+			safe += " "
 		} else {
-			safe = append(safe, s[i])
+			safe += fmt.Sprintf("%c", r)
 		}
 	}
-	return string(safe)
+	return safe
 }
 
 type Header struct {
