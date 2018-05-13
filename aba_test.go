@@ -225,3 +225,12 @@ func TestWriteReader(t *testing.T) {
 		t.Fatalf("Failure - expected 3 records but got %v and %v\n", len(r), f.Trailer.UserTotalRecords)
 	}
 }
+
+func TestASCIISafe(t *testing.T) {
+	if got := asciiSafe("O’Conner"); got != "O Conner" {
+		t.Fatalf("%q", got)
+	}
+	if got := asciiSafe("this is a normal ASCII string"); got != "this is a normal ASCII string" {
+		t.Fatalf("%q", got)
+	}
+}
