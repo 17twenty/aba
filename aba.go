@@ -9,6 +9,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
+
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -52,16 +57,16 @@ func spaces(howMany int) string {
 
 // asciiSafe replaces any non-printable ASCII chars with a '.'
 func asciiSafe(s string) string {
-	var safe string
-	for _, r := range s {
+	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+	safeString, _, _ := transform.String(t, s)
+	var resultString string
+	for _, r := range safeString {
 		// ' ' and '~' are the endpoints of the printable ASCII range.
-		if r < ' ' || r > '~' {
-			safe += " "
-		} else {
-			safe += fmt.Sprintf("%c", r)
+		if !(r < ' ' || r > '~') {
+			resultString += fmt.Sprintf("%c", r)
 		}
 	}
-	return safe
+	return resultString
 }
 
 type Header struct {
@@ -139,20 +144,29 @@ func (r *Record) IsValid() bool {
 		fallthrough
 	case Debit:
 		// All good - next checks
+		fallthrough
+	case Pay:
+		// All good - next checks
 	default:
 		return false
 	}
 
 	// Title validation - can't be all blank
 	if len(strings.TrimSpace(r.Title)) == 0 {
+		log.Println("Title validation")
 		return false
 	}
 
 	// BSB validation
 	if !bsbNumberRegEx.MatchString(r.TraceBSB) {
+		log.Println("Bad TraceBSB")
 		return false
 	}
-	return bsbNumberRegEx.MatchString(r.BSBNumber)
+	if !bsbNumberRegEx.MatchString(r.BSBNumber) {
+		log.Println("Bad BSB")
+		return false
+	}
+	return true
 }
 
 func (r *Record) Write(w io.Writer) {
