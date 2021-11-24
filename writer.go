@@ -48,9 +48,7 @@ func NewWriter(w io.Writer) *Writer {
 // Write writes the provided []Records into the buffer.
 // It returns an error if something is wrong with the records.
 func (w *Writer) Write(records []Record) (err error) {
-	if len(records) < 2 {
-		return ErrInsufficientRecords
-	}
+
 	if len(strings.TrimSpace(w.NameOfUsersBank)) == 0 {
 		return ErrMustSpecifyUsersBank
 	}
